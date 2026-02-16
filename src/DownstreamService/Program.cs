@@ -8,7 +8,7 @@ var random = new Random();
 
 app.MapGet("/data", async (ILogger<Program> logger) =>
 {
-    var delay = random.Next(100, 1500);
+    var delay = random.Next(100, 3000);
     await Task.Delay(delay);
 
     var shouldFail = random.NextDouble() < 0.3; // 30% failure rate
