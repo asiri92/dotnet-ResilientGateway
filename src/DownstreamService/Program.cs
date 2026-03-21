@@ -1,6 +1,15 @@
+using OpenTelemetry.Trace;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddLogging();
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(b =>
+    {
+        b.AddAspNetCoreInstrumentation()
+         .AddConsoleExporter();
+    });
 
 var app = builder.Build();
 

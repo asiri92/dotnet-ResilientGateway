@@ -1,10 +1,14 @@
 ﻿using ApiGateway.Clients;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using OpenTelemetry.Trace;
+using Serilog;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddLogging();
 builder.Services.AddHttpContextAccessor();
+
+builder.Services.AddTransient<CorrelationIdHandler>();
 
 builder.Services.AddHealthChecks()
     .AddCheck<DownstreamHealthCheck>(
@@ -16,12 +20,30 @@ builder.Services
     {
         client.BaseAddress = new Uri("http://localhost:5074"); // adjust port
     })
+    .AddHttpMessageHandler<CorrelationIdHandler>()
     .AddStandardResilienceHandler(); ;
 
 builder.Services.AddHttpClient("downstream", client =>
 {
     client.BaseAddress = new Uri("http://localhost:5074");
 });
+
+builder.Services.AddOpenTelemetry()
+    .WithTracing(tracerProviderBuilder =>
+    {
+        tracerProviderBuilder
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddConsoleExporter();
+    });
+
+Log.Logger = new LoggerConfiguration()
+    .Enrich.FromLogContext()
+    .Enrich.WithProperty("Application", "ApiGateway")
+    .WriteTo.Console()
+    .CreateLogger();
+
+builder.Host.UseSerilog();
 
 var app = builder.Build();
 

@@ -22,21 +22,7 @@ public sealed class DownstreamClient : IDownstreamClient
     {
         _logger.LogInformation("Calling downstream service");
 
-        var correlationId = _httpContextAccessor
-            .HttpContext?
-            .Request
-            .Headers["X-Correlation-ID"]
-            .ToString();
-
-        var request = new HttpRequestMessage(HttpMethod.Get, "/data");
-
-        if (!string.IsNullOrWhiteSpace(correlationId))
-        {
-            request.Headers.Add("X-Correlation-ID", correlationId);
-            _logger.LogInformation("Propagating Correlation ID: {CorrelationId}", correlationId);
-        }
-
-        var response = await _httpClient.SendAsync(request, cancellationToken);
+        var response = await _httpClient.GetAsync("/data", cancellationToken);
 
         if (!response.IsSuccessStatusCode)
         {
